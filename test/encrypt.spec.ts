@@ -1,6 +1,5 @@
 import { Encrypt } from '../src/encrypt'
 import { expect } from 'chai'
-import crypto from 'crypto'
 import { createReadableStream } from './utils'
 
 describe('encrypt', () => {
@@ -59,31 +58,33 @@ describe('encrypt', () => {
   describe('流式加密', () => {
     // 为了保证可测试性，需要指定 key 和初始化向量
     const key = Buffer.from('UZ/1c0zuAqURlFKd0/7+TtXP4aFPugihjem1Efiz2ew=', 'base64')
-    const iv = Buffer.from('9zyJk6Jd91cXf4K+j2YOu4YnY7g5TlbUqON4tscsCLo=', 'base64')
-    it('指定 key 情况下流式加密', () => {
+    const iv = Buffer.from('MBupFtTDnVk3DSfq', 'base64')
+    it('指定 key 情况下流式加密', (done) => {
       const encrypt = new Encrypt({
         iv,
         key,
       })
       const stream = createReadableStream([Buffer.from([0])])
       let en$ = stream.pipe(encrypt)
-      // en$.on('data', (d: Buffer) => {
-      //   console.log(d)
-      // })
-    })
-  })
-  it.skip('stream transform', () => {
-    const key = Buffer.from('UZ/1c0zuAqURlFKd0/7+TtXP4aFPugihjem1Efiz2ew=', 'base64')
-    const iv = Buffer.from('9zyJk6Jd91cXf4K+j2YOu4YnY7g5TlbUqON4tscsCLo=', 'base64')
-    const stream = createReadableStream([Buffer.from([0])])
-    let encrypt = crypto.createCipheriv('aes-256-gcm', key, iv)
-    let en$ = stream.pipe(encrypt)
-    en$.on('data', (d: Buffer) => {
-      console.log(d)
-    })
-    en$.on('end', () => {
-      console.log(encrypt.getAuthTag())
-      console.log('end')
+
+      let buffer = Buffer.from([])
+      en$.on('data', (d: Buffer) => {
+        buffer = Buffer.concat([buffer, d])
+      })
+      // 校验码 authTag 是
+      // <Buffer 83 76 3c 5b 05 d0 f9 5d ae 40 4d 0e 9e 70 fe 13>
+      // 密文是
+      // <Buffer 53>
+      // iv 是
+      // <Buffer 30 1b a9 16 d4 c3 9d 59 37 0d 27 ea>
+      en$.on('end', () => {
+        const target = Buffer.from([
+          0x30, 0x1b, 0xa9, 0x16, 0xd4, 0xc3, 0x9d, 0x59, 0x37, 0x0d, 0x27, 0xea, 0x53, 0x83, 0x76, 0x3c, 0x5b, 0x05,
+          0xd0, 0xf9, 0x5d, 0xae, 0x40, 0x4d, 0x0e, 0x9e, 0x70, 0xfe, 0x13,
+        ])
+        expect(buffer.toString('hex')).eq(target.toString('hex'))
+        done()
+      })
     })
   })
 })

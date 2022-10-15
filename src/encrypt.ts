@@ -29,6 +29,7 @@ export class Encrypt extends Transform {
   private ivLength = 12
   private iv: Buffer
   private key: Buffer
+  private isFirst = true
   cipher: CipherGCM
   private cipherGCMTypes: CipherGCMTypes = 'aes-256-gcm'
 
@@ -50,11 +51,20 @@ export class Encrypt extends Transform {
       authTagLength: this.macLength,
     })
   }
-  public _transform(chunk: any, encoding: BufferEncoding, callback: TransformCallback): void {
-    console.log(chunk, encoding, callback)
+  public _transform(chunk: any, _: BufferEncoding, callback: TransformCallback): void {
+    if (this.isFirst) {
+      this.push(this.getIV())
+      this.isFirst = false
+    }
+    this.push(this.cipher.update(chunk))
+    callback()
   }
   public _flush(callback: TransformCallback): void {
-    callback
+    this.cipher.final()
+    const authTag = this.cipher.getAuthTag()
+    this.push(authTag)
+    this.push(null)
+    callback()
   }
   private getKeyLength(cipherGCMTypes: CipherGCMTypes) {
     if (cipherGCMTypes === 'aes-256-gcm') {
