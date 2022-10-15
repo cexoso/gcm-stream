@@ -47,6 +47,12 @@ describe('encrypt', () => {
         expect(encrypt.getKey()).lengthOf(24, '182 对应 24 位')
       })
     })
+    describe('不指定 iv 的情况下会随机 iv', () => {
+      it('默认情况', () => {
+        expect(new Encrypt().getIV()).lengthOf(12, '默认随机 12 位 iv')
+        expect(new Encrypt({ ivLength: 20 }).getIV()).lengthOf(20)
+      })
+    })
   })
   describe.skip('流式加密', () => {
     // 为了保证可测试性，需要指定 key 和初始化向量
