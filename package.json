@@ -11,6 +11,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/mocha": "^10.0.0",
+    "@types/node": "^18.8.5",
     "mocha": "^10.0.0",
     "prettier": "^2.7.1",
     "ts-node": "^10.9.1",

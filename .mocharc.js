@@ -1,8 +1,8 @@
 
 module.exports = {
   extension: ["ts"],
-  spec: ["src/**/*.spec.ts"],
-  "watch-files": ["src/**/*.ts"],
+  spec: ["test/**/*.spec.ts"],
+  "watch-files": ["**/*.ts"],
   require: "ts-node/register",
   timeout: 300,
 };

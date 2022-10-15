@@ -2,6 +2,7 @@ lockfileVersion: 5.4
 
 specifiers:
   '@types/mocha': ^10.0.0
+  '@types/node': ^18.8.5
   mocha: ^10.0.0
   prettier: ^2.7.1
   ts-node: ^10.9.1
@@ -9,9 +10,10 @@ specifiers:
 
 devDependencies:
   '@types/mocha': 10.0.0
+  '@types/node': 18.8.5
   mocha: 10.0.0
   prettier: 2.7.1
-  ts-node: 10.9.1_typescript@4.8.4
+  ts-node: 10.9.1_ptpocrdt7oaz4ni5mlvucph5pa
   typescript: 4.8.4
 
 packages:
@@ -57,6 +59,10 @@ packages:
 
   /@types/mocha/10.0.0:
     resolution: {integrity: sha512-rADY+HtTOA52l9VZWtgQfn4p+UDVM2eDVkMZT1I6syp0YKxW2F9v+0pbRZLsvskhQv/vMb6ZfCay81GHbz5SHg==}
+    dev: true
+
+  /@types/node/18.8.5:
+    resolution: {integrity: sha512-Bq7G3AErwe5A/Zki5fdD3O6+0zDChhg671NfPjtIcbtzDNZTv4NPKMRFr7gtYPG7y+B8uTiNK4Ngd9T0FTar6Q==}
     dev: true
 
   /@ungap/promise-all-settled/1.1.2:
@@ -550,7 +556,7 @@ packages:
       is-number: 7.0.0
     dev: true
 
-  /ts-node/10.9.1_typescript@4.8.4:
+  /ts-node/10.9.1_ptpocrdt7oaz4ni5mlvucph5pa:
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
     hasBin: true
     peerDependencies:
@@ -569,6 +575,7 @@ packages:
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
+      '@types/node': 18.8.5
       acorn: 8.8.0
       acorn-walk: 8.2.0
       arg: 4.1.3
