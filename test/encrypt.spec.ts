@@ -19,10 +19,24 @@ describe('encrypt', () => {
         expect(encrypt.getKey().toString('hex')).eq('000102')
       })
     })
-    describe('在不指定 Key 的情况下,Encrypt 会根据指定的 GCM 加密方式自动生成一个 Key', () => {
+    describe('指定 iv 情况', () => {
+      it('指定 base64 编码的 iv', () => {
+        const encrypt = new Encrypt({
+          iv: Buffer.from([0, 1, 2]).toString('base64'),
+        })
+        expect(encrypt.getIV().toString('hex')).eq('000102')
+      })
+      it('直接指定 buffer', () => {
+        const encrypt = new Encrypt({
+          iv: Buffer.from([0, 1, 2]),
+        })
+        expect(encrypt.getIV().toString('hex')).eq('000102')
+      })
+    })
+    describe('在不指定 Key 的情况下会根据指定的 GCM 加密方式自动生成一个 Key', () => {
       it('默认情况', () => {
-        const encrypt = new Encrypt()
-        expect(encrypt.getKey()).lengthOf(32, '默认使用 aes-256-gcm, 对应 key 长度为 32')
+        expect(new Encrypt().getKey()).lengthOf(32, '默认使用 aes-256-gcm, 对应 key 长度为 32')
+        expect(new Encrypt({ cipherGCMTypes: 'aes-256-gcm' }).getKey()).lengthOf(32)
       })
       it('aes-128-gcm', () => {
         const encrypt = new Encrypt({ cipherGCMTypes: 'aes-128-gcm' })
@@ -34,7 +48,7 @@ describe('encrypt', () => {
       })
     })
   })
-  describe('流式加密', () => {
+  describe.skip('流式加密', () => {
     // 为了保证可测试性，需要指定 key 和初始化向量
     const key = Buffer.from('UZ/1c0zuAqURlFKd0/7+TtXP4aFPugihjem1Efiz2ew=', 'base64')
     const iv = Buffer.from('9zyJk6Jd91cXf4K+j2YOu4YnY7g5TlbUqON4tscsCLo=', 'base64')
@@ -43,22 +57,25 @@ describe('encrypt', () => {
         iv,
         key,
       })
-      expect(encrypt.getKey()).lengthOf(32, '默认使用 aes-256-gcm, 对应 key 长度为 32')
+      const stream = createReadableStream([Buffer.from([0])])
+      let en$ = stream.pipe(encrypt)
+      // en$.on('data', (d: Buffer) => {
+      //   console.log(d)
+      // })
     })
   })
-  //  it('stream transform', () => {
-  //     const stream = createReadableStream([Buffer.from([0])])
-  //     let encrypt = crypto.createCipheriv('aes-256-gcm', key, iv)
-  //     const encrypt = new Encrypt({
-  //       key
-  //     })
-  //     let en$ = stream.pipe(encrypt)
-  //     // en$.on('data', (d: Buffer) => {
-  //     //   console.log(d)
-  //     // })
-  //     // en$.on('end', () => {
-  //     //   console.log(encrypt.getAuthTag())
-  //     //   console.log('end')
-  //     // })
-  //   })
+  it.skip('stream transform', () => {
+    const key = Buffer.from('UZ/1c0zuAqURlFKd0/7+TtXP4aFPugihjem1Efiz2ew=', 'base64')
+    const iv = Buffer.from('9zyJk6Jd91cXf4K+j2YOu4YnY7g5TlbUqON4tscsCLo=', 'base64')
+    const stream = createReadableStream([Buffer.from([0])])
+    let encrypt = crypto.createCipheriv('aes-256-gcm', key, iv)
+    let en$ = stream.pipe(encrypt)
+    en$.on('data', (d: Buffer) => {
+      console.log(d)
+    })
+    en$.on('end', () => {
+      console.log(encrypt.getAuthTag())
+      console.log('end')
+    })
+  })
 })

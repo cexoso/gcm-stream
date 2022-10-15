@@ -2,6 +2,7 @@ import { Transform } from 'stream'
 import { randomBytes } from 'crypto'
 
 type CipherGCMTypes = 'aes-128-gcm' | 'aes-192-gcm' | 'aes-256-gcm'
+type TransformCallback = (error?: Error | null, data?: any) => void
 
 interface Options {
   macLength?: number
@@ -12,7 +13,7 @@ interface Options {
   /**
    * @description: iv 参数可以指定初始化向量，非必要情况，可以不传，程序会自己生成 iv
    */
-  iv?: Buffer
+  iv?: Buffer | string
   /**
    * @description: 指定生成 iv 的长度，默认值为 12 位
    * @default: 12
@@ -26,6 +27,7 @@ export class Encrypt extends Transform {
   private macLength = 16
   // GCM 默认初始化向量长度是 12 位
   private ivLength = 12
+  private iv: Buffer
   private key: Buffer
   private cipherGCMTypes: CipherGCMTypes = 'aes-256-gcm'
   constructor(options: Options = {}) {
@@ -40,9 +42,14 @@ export class Encrypt extends Transform {
     if (cipherGCMTypes) {
       this.cipherGCMTypes = cipherGCMTypes
     }
-    this.key = this.createKey(this.getKeyLength(this.cipherGCMTypes), key)
-    // console.log(this.macLength)
-    // console.log(this.ivLength)
+    this.key = this.create(this.getKeyLength(this.cipherGCMTypes), key)
+    this.iv = this.create(this.ivLength, iv)
+  }
+  public _transform(chunk: any, encoding: BufferEncoding, callback: TransformCallback): void {
+    console.log(chunk, encoding, callback)
+  }
+  public _flush(callback: TransformCallback): void {
+    callback
   }
   private getKeyLength(cipherGCMTypes: CipherGCMTypes) {
     if (cipherGCMTypes === 'aes-256-gcm') {
@@ -56,19 +63,14 @@ export class Encrypt extends Transform {
     }
     throw new Error(`unknow cipherGCMTypes: ${cipherGCMTypes}`)
   }
-  /**
-   * @param keyLength buffer key 的长度，单位是 bytes,必须跟加密算法长度对应
-   * 即 aes-128-gcm 算法是一次加密 128 位
-   * 128(bits) / 8 = 16(bytes) keyLength 应该是 16 位
-   */
-  private createKey(keyLength: number, specialkey: Buffer | string | undefined) {
-    if (specialkey !== undefined) {
-      if (typeof specialkey === 'string') {
-        return Buffer.from(specialkey, 'base64')
+  private create(length: number, specialValue: Buffer | string | undefined) {
+    if (specialValue !== undefined) {
+      if (typeof specialValue === 'string') {
+        return Buffer.from(specialValue, 'base64')
       }
-      return specialkey
+      return specialValue
     }
-    return randomBytes(keyLength)
+    return randomBytes(length)
   }
   public getKey() {
     return this.key
@@ -78,5 +80,8 @@ export class Encrypt extends Transform {
    */
   public getKeyBase64() {
     return this.key.toString('base64')
+  }
+  public getIV() {
+    return this.iv
   }
 }
