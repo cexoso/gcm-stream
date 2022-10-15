@@ -1,5 +1,5 @@
 import { Transform } from 'stream'
-import { randomBytes } from 'crypto'
+import { randomBytes, createCipheriv, CipherGCM } from 'crypto'
 
 type CipherGCMTypes = 'aes-128-gcm' | 'aes-192-gcm' | 'aes-256-gcm'
 type TransformCallback = (error?: Error | null, data?: any) => void
@@ -29,7 +29,9 @@ export class Encrypt extends Transform {
   private ivLength = 12
   private iv: Buffer
   private key: Buffer
+  cipher: CipherGCM
   private cipherGCMTypes: CipherGCMTypes = 'aes-256-gcm'
+
   constructor(options: Options = {}) {
     super()
     const { macLength, ivLength, cipherGCMTypes, key, iv } = options
@@ -44,6 +46,9 @@ export class Encrypt extends Transform {
     }
     this.key = this.create(this.getKeyLength(this.cipherGCMTypes), key)
     this.iv = this.create(this.ivLength, iv)
+    this.cipher = createCipheriv(this.cipherGCMTypes, this.key, this.iv, {
+      authTagLength: this.macLength,
+    })
   }
   public _transform(chunk: any, encoding: BufferEncoding, callback: TransformCallback): void {
     console.log(chunk, encoding, callback)

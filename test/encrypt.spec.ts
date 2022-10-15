@@ -8,15 +8,17 @@ describe('encrypt', () => {
     describe('指定 Key 情况', () => {
       it('指定 base64 编码的 key', () => {
         const encrypt = new Encrypt({
-          key: Buffer.from([0, 1, 2]).toString('base64'),
+          key: Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]).toString('base64'),
+          cipherGCMTypes: 'aes-128-gcm',
         })
-        expect(encrypt.getKey().toString('hex')).eq('000102')
+        expect(encrypt.getKey().toString('hex')).eq('000102030405060708090a0b0c0d0e0f')
       })
       it('直接指定 buffer', () => {
         const encrypt = new Encrypt({
-          key: Buffer.from([0, 1, 2]),
+          key: Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]),
+          cipherGCMTypes: 'aes-128-gcm',
         })
-        expect(encrypt.getKey().toString('hex')).eq('000102')
+        expect(encrypt.getKey().toString('hex')).eq('000102030405060708090a0b0c0d0e0f')
       })
     })
     describe('指定 iv 情况', () => {
@@ -54,7 +56,7 @@ describe('encrypt', () => {
       })
     })
   })
-  describe.skip('流式加密', () => {
+  describe('流式加密', () => {
     // 为了保证可测试性，需要指定 key 和初始化向量
     const key = Buffer.from('UZ/1c0zuAqURlFKd0/7+TtXP4aFPugihjem1Efiz2ew=', 'base64')
     const iv = Buffer.from('9zyJk6Jd91cXf4K+j2YOu4YnY7g5TlbUqON4tscsCLo=', 'base64')
