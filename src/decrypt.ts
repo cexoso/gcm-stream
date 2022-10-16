@@ -33,7 +33,6 @@ export class Decrypt extends Transform {
 
   // 用于缓冲流数据的块
   private chunkBuffer: Buffer
-  private chunkBufferStart = 0 // 包含
   private chunkBufferEnd = 0 // 不包含
 
   private decipher: DecipherGCM
@@ -59,26 +58,31 @@ export class Decrypt extends Transform {
     }
     this.chunkBuffer = Buffer.alloc(Math.max(this.ivLength, this.macLength))
   }
+  /**
+   * @returns 返回值是消耗 newArrivalBuffer 的长度
+   */
   private tryCreateDecipher(newArrivalBuffer: Buffer) {
     if (this.iv) {
       // 外部传入 iv 构造 decipher
       this.decipher = createDecipheriv(this.cipherGCMTypes, this.key, this.iv)
-      return this.decipher
+      return 0
     }
 
-    const chunkBufferSize = this.chunkBufferEnd - this.chunkBufferStart
+    const { chunkBufferEnd } = this
 
-    if (chunkBufferSize + newArrivalBuffer.length >= this.ivLength) {
+    if (chunkBufferEnd + newArrivalBuffer.length >= this.ivLength) {
       // 密文头部带 iv 的情况，确保收到了所有的 iv buffer
       const ivBuffer = Buffer.alloc(this.ivLength)
-      this.chunkBuffer.copy(ivBuffer, this.chunkBufferStart, 0, chunkBufferSize)
-      let lessSize = this.ivLength - chunkBufferSize
-      newArrivalBuffer.copy(ivBuffer, chunkBufferSize, 0, lessSize)
+      this.chunkBuffer.copy(ivBuffer, 0, 0, chunkBufferEnd)
+      let lessSize = this.ivLength - chunkBufferEnd
+      newArrivalBuffer.copy(ivBuffer, this.chunkBufferEnd, 0, lessSize)
       this.iv = ivBuffer
       this.decipher = createDecipheriv(this.cipherGCMTypes, this.key, this.iv)
+      this.chunkBufferEnd = 0
+      return lessSize
     }
     // 目前还无法创建 decipher
-    return
+    return 0
   }
   public _transform(
     chunk: any,
@@ -86,27 +90,49 @@ export class Decrypt extends Transform {
     callback: TransformCallback
   ): void {
     const bufferChunk = Buffer.from(chunk)
+    let digestLength = 0
     if (this.decipher === undefined) {
-      this.tryCreateDecipher(bufferChunk)
+      digestLength = this.tryCreateDecipher(bufferChunk)
     }
-    bufferChunk.copy(this.chunkBuffer, this.chunkBufferEnd)
-    this.chunkBufferEnd += bufferChunk.length
+
+    if (this.decipher) {
+      let validLength =
+        bufferChunk.length + this.chunkBufferEnd - this.macLength - digestLength
+      if (validLength > 0) {
+        let start = 0
+        const encBuffer = Buffer.allocUnsafe(validLength)
+        if (this.chunkBufferEnd > 0) {
+          this.chunkBuffer.copy(encBuffer, start, 0, this.chunkBufferEnd)
+          start = this.chunkBufferEnd
+          validLength -= this.chunkBufferEnd
+        }
+        bufferChunk.copy(
+          encBuffer,
+          start,
+          digestLength,
+          digestLength + validLength
+        )
+        bufferChunk.copy(
+          this.chunkBuffer,
+          0,
+          digestLength + validLength,
+          bufferChunk.length
+        )
+        this.chunkBufferEnd = bufferChunk.length - digestLength - validLength
+        this.push(this.decipher.update(encBuffer))
+      }
+    } else {
+      bufferChunk.copy(this.chunkBuffer, this.chunkBufferEnd, digestLength)
+      this.chunkBufferEnd += bufferChunk.length
+    }
     callback()
-    // if (this.isFirst) {
-    //   this.push(this.getIV())
-    //   this.isFirst = false
-    // }
-    // this.push(this.cipher.update(chunk))
-    // callback()
   }
   public _flush(callback: TransformCallback): void {
+    const authTag = this.chunkBuffer
+    this.decipher.setAuthTag(authTag)
+    this.decipher.final()
     this.push(null)
     callback()
-    // this.cipher.final()
-    // const authTag = this.cipher.getAuthTag()
-    // this.push(authTag)
-    // this.push(null)
-    // callback()
   }
   private getValue(value: Buffer | string) {
     if (typeof value === 'string') {
