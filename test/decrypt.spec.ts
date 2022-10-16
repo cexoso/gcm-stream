@@ -156,6 +156,41 @@ describe('decrypt', () => {
           done()
         })
       })
+      it('authtag 校验码错误，解码不成功', (done) => {
+        const key = Buffer.from(
+          'UZ/1c0zuAqURlFKd0/7+TtXP4aFPugihjem1Efiz2ew=',
+          'base64'
+        )
+        const decrypt = new Decrypt({
+          key,
+        })
+        const stream = createReadableStream([
+          Buffer.from([0x30, 0x1b, 0xa9, 0x16, 0xd4]),
+          Buffer.from([0xc3, 0x9d, 0x59, 0x37, 0x0d]),
+          Buffer.from([
+            0x27, 0xea, 0x53, 0x83, 0x76, 0x3c, 0x5b, 0x05, 0xd0, 0xf9, 0x5d,
+            0xae, 0x40, 0x4d, 0x0e, 0x9e, 0x70, 0xfe, 0x23,
+          ]),
+        ])
+
+        let buffer = Buffer.from([])
+        let de$ = stream.pipe(decrypt)
+        de$.on('data', (d: Buffer) => {
+          buffer = Buffer.concat([buffer, d])
+        })
+        de$.on('error', (error) => {
+          const target = Buffer.from([0])
+          expect(buffer.toString('hex')).eq(
+            target.toString('hex'),
+            '校验码不正确依然可以正确的解码出内容'
+          )
+          expect(error.message).match(
+            /Unsupported state or unable to authenticate data/,
+            '因为校验码不正确会得到一个错误'
+          )
+          done()
+        })
+      })
     })
   })
 })
