@@ -21,7 +21,7 @@ export class LoopBuffer {
       const buffer = this.bufferList[i]
       if (buffer.length - this.point > lessSize) {
         // 当前的有余
-        buffer.copy(result, start, this.point, lessSize)
+        buffer.copy(result, start, this.point, this.point + lessSize)
         this.point += lessSize
         break
       }
