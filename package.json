@@ -1,12 +1,17 @@
 {
   "name": "gcm-stream",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "mocha --config .mocharc.js --exit",
     "build": "tsc -p tsconfig.json",
     "prepare": "bash bin/prepublish.sh"
+  },
+  "homepage": "https://github.com/cexoso/gcm-stream",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/npm/cli.git"
   },
   "keywords": [
     "aes-gcm",
