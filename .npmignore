@@ -1,7 +1,11 @@
 **/*.ts
+!**/*.d.ts
+
 .mocharc.js
 .prettierrc
 tsconfig.json
 bin/prepublish.sh
 pnpm-lock.yaml
+*.tgz
+
 
