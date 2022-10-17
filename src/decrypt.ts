@@ -29,15 +29,12 @@ export class Decrypt extends Transform {
   private macLength = 16
   // GCM 默认初始化向量长度是 12 位
   private ivLength = 12
-  private iv: Buffer
+  private iv: Buffer | undefined
   private key: Buffer
 
-  // 用于缓冲流数据的块
-  private chunkBuffer: Buffer
-  private chunkBufferEnd = 0 // 不包含
   private loopBuffer: LoopBuffer
 
-  private decipher: DecipherGCM
+  private decipher: DecipherGCM | undefined
   private cipherGCMTypes: CipherGCMTypes = 'aes-256-gcm'
 
   constructor(options: Options) {
@@ -59,7 +56,6 @@ export class Decrypt extends Transform {
       this.iv = this.getValue(iv)
     }
     this.loopBuffer = new LoopBuffer()
-    this.chunkBuffer = Buffer.alloc(Math.max(this.ivLength, this.macLength))
   }
   /**
    * @returns 返回值是消耗 newArrivalBuffer 的长度
@@ -102,8 +98,8 @@ export class Decrypt extends Transform {
   }
   public _flush(callback: TransformCallback): void {
     const authTag = this.loopBuffer.mutableGetBufferBySize(this.macLength)
-    this.decipher.setAuthTag(authTag)
-    this.decipher.final()
+    this.decipher!.setAuthTag(authTag)
+    this.decipher!.final()
     this.push(null)
     callback()
   }

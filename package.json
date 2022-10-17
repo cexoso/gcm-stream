@@ -1,12 +1,20 @@
 {
-  "name": "aes-gcm",
+  "name": "gcm-stream",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --config .mocharc.js --exit"
+    "test": "mocha --config .mocharc.js --exit",
+    "build": "tsc -p tsconfig.json",
+    "prepublish": "npm run build",
+    "postpublish": "echo 123"
   },
-  "keywords": [],
+  "keywords": [
+    "aes-gcm",
+    "gcm-stream",
+    "aes-gcm-stream",
+    "aes-256-gcm"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {

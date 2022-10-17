@@ -30,7 +30,7 @@ export class Encrypt extends Transform {
   private iv: Buffer
   private key: Buffer
   private isFirst = true
-  cipher: CipherGCM
+  private cipher: CipherGCM
   private cipherGCMTypes: CipherGCMTypes = 'aes-256-gcm'
 
   constructor(options: Options = {}) {

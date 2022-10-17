@@ -9,7 +9,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": [],
+  "include": ["src", "index.ts"],
   "ts-node": {
     "transpileOnly": true,
     "compilerOptions": {
