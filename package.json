@@ -6,8 +6,7 @@
   "scripts": {
     "test": "mocha --config .mocharc.js --exit",
     "build": "tsc -p tsconfig.json",
-    "prepublish": "npm run build",
-    "postpublish": "echo 123"
+    "prepublishOnly": "bin/prepublish.sh"
   },
   "keywords": [
     "aes-gcm",
