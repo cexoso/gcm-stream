@@ -1,6 +1,7 @@
 import { Transform } from 'stream'
 import { createDecipheriv, DecipherGCM } from 'crypto'
 import { Buffer } from 'buffer'
+import { LoopBuffer } from './loopBuffer'
 
 type CipherGCMTypes = 'aes-128-gcm' | 'aes-192-gcm' | 'aes-256-gcm'
 type TransformCallback = (error?: Error | null, data?: any) => void
@@ -34,6 +35,7 @@ export class Decrypt extends Transform {
   // 用于缓冲流数据的块
   private chunkBuffer: Buffer
   private chunkBufferEnd = 0 // 不包含
+  private loopBuffer: LoopBuffer
 
   private decipher: DecipherGCM
   private cipherGCMTypes: CipherGCMTypes = 'aes-256-gcm'
@@ -56,30 +58,23 @@ export class Decrypt extends Transform {
       // 支持从外部传递
       this.iv = this.getValue(iv)
     }
+    this.loopBuffer = new LoopBuffer()
     this.chunkBuffer = Buffer.alloc(Math.max(this.ivLength, this.macLength))
   }
   /**
    * @returns 返回值是消耗 newArrivalBuffer 的长度
    */
-  private tryCreateDecipher(newArrivalBuffer: Buffer) {
+  private tryCreateDecipher() {
     if (this.iv) {
       // 外部传入 iv 构造 decipher
       this.decipher = createDecipheriv(this.cipherGCMTypes, this.key, this.iv)
       return 0
     }
 
-    const { chunkBufferEnd } = this
-
-    if (chunkBufferEnd + newArrivalBuffer.length >= this.ivLength) {
-      // 密文头部带 iv 的情况，确保收到了所有的 iv buffer
-      const ivBuffer = Buffer.alloc(this.ivLength)
-      this.chunkBuffer.copy(ivBuffer, 0, 0, chunkBufferEnd)
-      let lessSize = this.ivLength - chunkBufferEnd
-      newArrivalBuffer.copy(ivBuffer, this.chunkBufferEnd, 0, lessSize)
-      this.iv = ivBuffer
+    const bufferSize = this.loopBuffer.size
+    if (bufferSize > this.ivLength) {
+      this.iv = this.loopBuffer.mutableGetBufferBySize(this.ivLength)
       this.decipher = createDecipheriv(this.cipherGCMTypes, this.key, this.iv)
-      this.chunkBufferEnd = 0
-      return lessSize
     }
     // 目前还无法创建 decipher
     return 0
@@ -90,45 +85,23 @@ export class Decrypt extends Transform {
     callback: TransformCallback
   ): void {
     const bufferChunk = Buffer.from(chunk)
-    let digestLength = 0
+    this.loopBuffer.push(bufferChunk)
     if (this.decipher === undefined) {
-      digestLength = this.tryCreateDecipher(bufferChunk)
+      this.tryCreateDecipher()
     }
 
     if (this.decipher) {
-      let validLength =
-        bufferChunk.length + this.chunkBufferEnd - this.macLength - digestLength
-      if (validLength > 0) {
-        let start = 0
-        const encBuffer = Buffer.allocUnsafe(validLength)
-        if (this.chunkBufferEnd > 0) {
-          this.chunkBuffer.copy(encBuffer, start, 0, this.chunkBufferEnd)
-          start = this.chunkBufferEnd
-          validLength -= this.chunkBufferEnd
-        }
-        bufferChunk.copy(
-          encBuffer,
-          start,
-          digestLength,
-          digestLength + validLength
-        )
-        bufferChunk.copy(
-          this.chunkBuffer,
-          0,
-          digestLength + validLength,
-          bufferChunk.length
-        )
-        this.chunkBufferEnd = bufferChunk.length - digestLength - validLength
+      const validateSize = this.loopBuffer.size - this.macLength
+      if (validateSize > 0) {
+        // 要确认一个 buffer 不是 maclength 的
+        const encBuffer = this.loopBuffer.mutableGetBufferBySize(validateSize)
         this.push(this.decipher.update(encBuffer))
       }
-    } else {
-      bufferChunk.copy(this.chunkBuffer, this.chunkBufferEnd, digestLength)
-      this.chunkBufferEnd += bufferChunk.length
     }
     callback()
   }
   public _flush(callback: TransformCallback): void {
-    const authTag = this.chunkBuffer
+    const authTag = this.loopBuffer.mutableGetBufferBySize(this.macLength)
     this.decipher.setAuthTag(authTag)
     this.decipher.final()
     this.push(null)
