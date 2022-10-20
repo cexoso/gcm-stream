@@ -34,6 +34,14 @@ describe('encrypt', () => {
         expect(encrypt.getIV().toString('hex')).eq('000102')
       })
     })
+    describe('不在头部自动带上 iv', () => {
+      it('指定 base64 编码的 iv', () => {
+        const encrypt = new Encrypt({
+          iv: Buffer.from([0, 1, 2]).toString('base64'),
+          withoutIV: true,
+        })
+      })
+    })
     describe('在不指定 Key 的情况下会根据指定的 GCM 加密方式自动生成一个 Key', () => {
       it('默认情况', () => {
         expect(new Encrypt().getKey()).lengthOf(32, '默认使用 aes-256-gcm, 对应 key 长度为 32')
@@ -80,6 +88,28 @@ describe('encrypt', () => {
       en$.on('end', () => {
         const target = Buffer.from([
           0x30, 0x1b, 0xa9, 0x16, 0xd4, 0xc3, 0x9d, 0x59, 0x37, 0x0d, 0x27, 0xea, 0x53, 0x83, 0x76, 0x3c, 0x5b, 0x05,
+          0xd0, 0xf9, 0x5d, 0xae, 0x40, 0x4d, 0x0e, 0x9e, 0x70, 0xfe, 0x13,
+        ])
+        expect(buffer.toString('hex')).eq(target.toString('hex'))
+        done()
+      })
+    })
+    it('不在头部自动带上 IV', (done) => {
+      const encrypt = new Encrypt({ iv, key, withoutIV: true })
+      const stream = createReadableStream([Buffer.from([0])])
+      let en$ = stream.pipe(encrypt)
+
+      let buffer = Buffer.from([])
+      en$.on('data', (d: Buffer) => {
+        buffer = Buffer.concat([buffer, d])
+      })
+      // 校验码 authTag 是
+      // <Buffer 83 76 3c 5b 05 d0 f9 5d ae 40 4d 0e 9e 70 fe 13>
+      // 密文是
+      // <Buffer 53>
+      en$.on('end', () => {
+        const target = Buffer.from([
+          0x53, 0x83, 0x76, 0x3c, 0x5b, 0x05,
           0xd0, 0xf9, 0x5d, 0xae, 0x40, 0x4d, 0x0e, 0x9e, 0x70, 0xfe, 0x13,
         ])
         expect(buffer.toString('hex')).eq(target.toString('hex'))

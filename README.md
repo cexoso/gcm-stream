@@ -29,11 +29,12 @@ readStream.pipe(encrypt).pipe(decrypt).pipe(fs.createWriteStream('test.dec'))
 |-------------- | -------------- | -------------- |
 | key | 密钥，用于加解密 | 否，如果不传内部会随机, 可以通过 encrypt.getKey 或者 encrypt.getKeyBase64 获取
 | iv | 初始化向量| 否，如果不传内部会随机, 可以通过 encrypt.getIV |
+| withoutIV | 是否自动将 IV 添加到密文前 | 否 |
 | ivLength | 初始化向量随机的长度, 默认 12 bytes, 当不传递 iv 时用于自动生成 iv| 否|
 | cipherGCMTypes | gcm 加密类型| 否,默认 aes-256-gcm|
 | macLength | 校验码的长度| 否,默认 16 bytes|
 
-## const encrypt = Encrypt(options)
+## const decrypt = Decrypt(options)
 
 支持的参数
 | name | 作用 | 是否必填 |
@@ -44,8 +45,7 @@ readStream.pipe(encrypt).pipe(decrypt).pipe(fs.createWriteStream('test.dec'))
 | cipherGCMTypes | gcm 加密类型| 否,默认 aes-256-gcm|
 | macLength | 校验码的长度| 否,默认 16 bytes|
 
- 注意: 加密解密的 key 要一样, iv 长度和 mac 的长度也很重要，如果约定不是使用 iv 12bytes、macLength 16bytes 的情况下，需要主动的声明长度.
-
+注意: 加密解密的 key 要一样, iv 长度和 mac 的长度也很重要，如果约定不是使用 iv 12bytes、macLength 16bytes 的情况下，需要主动的声明长度.
 
 # 背景
 

@@ -1,4 +1,5 @@
 import { Decrypt } from '../src/decrypt'
+import { Encrypt } from '../src/encrypt'
 import { expect } from 'chai'
 import { createReadableStream } from './utils'
 
@@ -88,6 +89,22 @@ describe('decrypt', () => {
           de$.on('end', () => {
             const ivBuffer = decrypt.getIV()
             expect(ivBuffer.toString('hex')).eq(targetIV.toString('hex'))
+            done()
+          })
+        })
+        it('加密时指定 IV，并不自动带上 IV，解密是指定 IV 解密', (done) => {
+          const encrypt = new Encrypt({ key, iv: targetIV, withoutIV: true })
+          const decrypt = new Decrypt({ key, iv: targetIV })
+          const stream = createReadableStream([Buffer.from([0x00])])
+
+          let de$ = stream.pipe(encrypt).pipe(decrypt)
+          let buffer = Buffer.from([])
+          de$.on('data', (d: Buffer) => {
+            buffer = Buffer.concat([buffer, d])
+          })
+          de$.on('end', () => {
+            const target = Buffer.from([0])
+            expect(buffer.toString('hex')).eq(target.toString('hex'))
             done()
           })
         })

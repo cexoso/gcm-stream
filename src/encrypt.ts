@@ -5,6 +5,10 @@ type CipherGCMTypes = 'aes-128-gcm' | 'aes-192-gcm' | 'aes-256-gcm'
 type TransformCallback = (error?: Error | null, data?: any) => void
 
 interface Options {
+  /**
+   * @description 不自动带上 IV 头
+   */
+  withoutIV?: boolean
   macLength?: number
   /**
    * @description: 指定的 key, 可以是 Buffer，也可以是 base64 编码的 string
@@ -27,6 +31,7 @@ export class Encrypt extends Transform {
   private macLength = 16
   // GCM 默认初始化向量长度是 12 位
   private ivLength = 12
+  private withoutIV = false
   private iv: Buffer
   private key: Buffer
   private isFirst = true
@@ -35,7 +40,7 @@ export class Encrypt extends Transform {
 
   constructor(options: Options = {}) {
     super()
-    const { macLength, ivLength, cipherGCMTypes, key, iv } = options
+    const { macLength, ivLength, cipherGCMTypes, key, iv, withoutIV } = options
     if (macLength) {
       this.macLength = macLength
     }
@@ -47,13 +52,21 @@ export class Encrypt extends Transform {
     }
     this.key = this.create(this.getKeyLength(this.cipherGCMTypes), key)
     this.iv = this.create(this.ivLength, iv)
+    this.withoutIV = Boolean(withoutIV)
     this.cipher = createCipheriv(this.cipherGCMTypes, this.key, this.iv, {
       authTagLength: this.macLength,
     })
   }
-  public _transform(chunk: any, _: BufferEncoding, callback: TransformCallback): void {
+  public _transform(
+    chunk: any,
+    _: BufferEncoding,
+    callback: TransformCallback
+  ): void {
     if (this.isFirst) {
-      this.push(this.getIV())
+      if (!this.withoutIV) {
+        // 现在允许不自动在头部带上 IV 的形式了
+        this.push(this.getIV())
+      }
       this.isFirst = false
     }
     this.push(this.cipher.update(chunk))
