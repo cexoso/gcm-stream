@@ -101,6 +101,8 @@ export class Decrypt extends Transform {
       const authTag = this.loopBuffer.mutableGetBufferBySize(this.macLength)
       this.decipher!.setAuthTag(authTag)
       this.decipher!.final()
+    } catch (e) {
+      this.emit('error', e)
     } finally {
       this.push(null)
       callback()

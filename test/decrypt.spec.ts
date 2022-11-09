@@ -173,7 +173,9 @@ describe('decrypt', () => {
         de$.on('data', (d: Buffer) => {
           buffer = Buffer.concat([buffer, d])
         })
+        let hasError = false
         de$.on('error', (error) => {
+          hasError = true
           const target = Buffer.from([0])
           expect(buffer.toString('hex')).eq(
             target.toString('hex'),
@@ -185,6 +187,7 @@ describe('decrypt', () => {
           )
         })
         de$.on('end', () => {
+          expect(hasError).eq(true)
           // 报错了也必须完成
           done()
         })
