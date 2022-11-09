@@ -183,6 +183,9 @@ describe('decrypt', () => {
             /Unsupported state or unable to authenticate data/,
             '因为校验码不正确会得到一个错误'
           )
+        })
+        de$.on('end', () => {
+          // 报错了也必须完成
           done()
         })
       })

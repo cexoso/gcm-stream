@@ -97,11 +97,14 @@ export class Decrypt extends Transform {
     callback()
   }
   public _flush(callback: TransformCallback): void {
-    const authTag = this.loopBuffer.mutableGetBufferBySize(this.macLength)
-    this.decipher!.setAuthTag(authTag)
-    this.decipher!.final()
-    this.push(null)
-    callback()
+    try {
+      const authTag = this.loopBuffer.mutableGetBufferBySize(this.macLength)
+      this.decipher!.setAuthTag(authTag)
+      this.decipher!.final()
+    } finally {
+      this.push(null)
+      callback()
+    }
   }
   private getValue(value: Buffer | string) {
     if (typeof value === 'string') {
