@@ -6,7 +6,8 @@
   "scripts": {
     "test": "mocha --config .mocharc.js --exit",
     "build": "tsc -p tsconfig.json",
-    "prepare": "bash bin/prepublish.sh"
+    "prepare": "bash bin/prepublish.sh",
+    "coverage": "nyc npm run test"
   },
   "homepage": "https://github.com/cexoso/gcm-stream",
   "repository": {
@@ -22,11 +23,13 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@cexoso/git-diff-report": "^0.0.2",
     "@types/chai": "^4.3.3",
     "@types/mocha": "^10.0.0",
     "@types/node": "^18.8.5",
     "chai": "^4.3.6",
     "mocha": "^10.0.0",
+    "nyc": "^15.1.0",
     "prettier": "^2.7.1",
     "ts-node": "^10.9.1",
     "typescript": "^4.8.4"
