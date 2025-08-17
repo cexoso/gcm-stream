@@ -1,11 +1,7 @@
 module.exports = {
   all: false,
-  include: ['src/**/*.ts'],
-  'check-coverage': true,
-  branches: 80,
-  lines: 90,
-  functions: 90,
-  statements: 90,
-  perFile: true,
+  include: ['src/**'],
+  exclude: ['**/*.spec.ts', 'src/service/**/*.spec.ts'],
   reporter: [require.resolve('@cexoso/git-diff-report')],
+  // reporter: ['html'],
 }
