@@ -28,7 +28,7 @@ readStream.pipe(encrypt).pipe(decrypt).pipe(fs.createWriteStream('test.dec'))
 | name | 作用 | 是否必填 |
 |-------------- | -------------- | -------------- |
 | key | 密钥，用于加解密 | 否，如果不传内部会随机, 可以通过 encrypt.getKey 或者 encrypt.getKeyBase64 获取
-| iv | 初始化向量| 否，如果不传内部会随机, 可以通过 encrypt.getIV |
+| iv | 初始化向量| 否，如果不传内部会随机, 可以通过 encrypt.getIV 获取 |
 | withoutIV | 是否自动将 IV 添加到密文前 | 否 |
 | ivLength | 初始化向量随机的长度, 默认 12 bytes, 当不传递 iv 时用于自动生成 iv| 否|
 | cipherGCMTypes | gcm 加密类型| 否,默认 aes-256-gcm|
@@ -68,11 +68,11 @@ readStream.pipe(encrypt).pipe(decrypt).pipe(fs.createWriteStream('test.dec'))
 
 ## GCM 加密数据构成
 
-GCM 加密算法数据的构成是，开着为一段初始化向量 iv（也作 nonce）。初始化 GCM 加密需要密钥(key)和初始化向量(iv)，其中 iv 是可以公开的，所以 GCM 中可以将 iv 放在密文前传输。iv 的长度一般是 12 bytes，但也可以自定义长度。
+GCM 加密算法数据的构成是，开头为一段初始化向量 iv（也作 nonce）。初始化 GCM 加密需要密钥(key)和初始化向量(iv)，其中 iv 是可以公开的，所以 GCM 中可以将 iv 放在密文前传输。iv 的长度一般是 12 bytes，但也可以自定义长度。
 
 在 iv 后跟随着的就是密文，密文的长度不确定，与原文相关。
 
-在密文的后面跟随着的是校验码(MAC)，在 nodejs 中是 authTag，校验码的作用是检查数据包是否被串改。一旦密文被串改，在解码时就会因为校验码校验不通过而报错。 MAC 的长度一般是 16 bytes，但也可以自定义长度。
+在密文的后面跟随着的是校验码(MAC)，在 nodejs 中是 authTag，校验码的作用是检查数据包是否被篡改。一旦密文被篡改，在解码时就会因为校验码校验不通过而报错。 MAC 的长度一般是 16 bytes，但也可以自定义长度。
 
 ## 如何做到流式加解密
 
